@@ -3,6 +3,8 @@ from tkinter import messagebox
 import random
 import webbrowser
 
+#Matt Griffiths 20226373
+
 # Sample quiz questions for study (Criminal Law Victoria)
 # Dictionary format:
 # - question: Quiz question
@@ -223,7 +225,7 @@ class lawQuizApp:
                 self.radio_buttons[i].config(text=option, value=i)
 
     def next_question(self):
-        """Handle Next button: validate selection, record score and explanation, advance or show results."""
+       # Next Question, populate possible answers, record answer and explanation.
         if self.selected_option.get() == -1:
             messagebox.showwarning("Warning", "Please select an answer before continuing.")
             return
@@ -287,52 +289,54 @@ class lawQuizApp:
         btn_frame = tk.Frame(result_window, bg=self.BG_COLOR)
         btn_frame.pack(pady=10)
 
+        
+        def retry_same_quiz():
+            result_window.destroy()
+            # Reuse the same set of original questions
+            self.questions = self.original_questions.copy()
+            self.q_index = 0
+            self.score = 0
+            self.explanations = []
+            self.selected_option.set(-1)
+            self.load_question()
+
+        def on_new_quiz():
+            result_window.destroy()
+            # Start a fresh quiz (will pick new random questions)
+            self.start_quiz()
+
         retry_same_button = tk.Button(btn_frame,
                                  text="Retry Quiz",
                                  font=("Arial", 14),
                                  bg=self.BTN_BG,highlightbackground=self.BG_COLOR,
-                                 command=lambda: [result_window.destroy(), self.retry_same_quiz()])
-        retry_same_button.grid(row=0, column=0, padx=10)
+                                 command=retry_same_quiz)
+        retry_same_button.pack(side="left", padx=10)
         
         # Retry with new questions
-        retry_new_button = tk.Button(result_window,
+        retry_new_button = tk.Button(btn_frame,
                              text="New Quiz",
                              font=("Arial", 14),
-                             bg=self.BTN_BG,Highlightbackground=self.BG_COLOR,
-                             command=lambda: [result_window.destroy(), self.start_quiz()])
-        retry_new_button.grid(row=0, column=1, padx=10)
-
+                             bg=self.BTN_BG,highlightbackground=self.BG_COLOR,
+                             command=on_new_quiz)
+        retry_new_button.pack(side="left", padx=10)
+        
+        #Quit button
         quit_button = tk.Button(btn_frame,
                                 text="Quit",
                                 font=("Arial", 14),
                                 bg=self.BTN_BG,highlightbackground=self.BG_COLOR,
                                 command=self.root.quit)
-        quit_button.pack(padx=10)
+        quit_button.pack(side="left", padx=10)
     
-    def retry_same_quiz(self):
-        self.root.destroy()  # Close current quiz window
-        root = tk.Tk()
-        app = lawQuizApp(root)
-        app.questions = self.original_questions.copy()  # Reuse same questions
-        app.start_quiz()
-        root.mainloop()
-        
-    def start_quiz(self):
-        self.root.destroy()  # Close current quiz window
-        root = tk.Tk()
-        app = lawQuizApp(root)
-        app.start_quiz()  # This will randomize new questions
-        root.mainloop()
-
-
+            
     def quit_to_start(self):
-        """Return to the welcome screen without destroying the single root window."""
+        #Return to the welcome screen
         if messagebox.askyesno("Confirm", "Are you sure you want to return to the welcome screen?"):
-            # Remove all widgets attached to root and call the provided back callback to re-show the welcome UI
+            # Remove all windows
             for w in self.root.winfo_children():
                 w.destroy()
             self.back_callback()
 
-
+# This is important if you want the start screen to start.
 if __name__ == "__main__":
     start_screen()
