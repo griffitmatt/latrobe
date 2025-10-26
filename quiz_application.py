@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import random
 import webbrowser
+import time
 
 #Matt Griffiths 20226373
 
@@ -9,7 +10,7 @@ import webbrowser
 # Dictionary format:
 # - question: Quiz question
 # - options: Possible answers
-# - correct_index: 0-based index of the correct answer in options
+# - correct_index: use index of the correct answer in options
 # - explanation: Brief explanation of the answer
 # - learnmore: Weblink for more detailed information about the answer
 questions = [
@@ -47,7 +48,7 @@ questions = [
         ],
         "correct_index": 2,
         "explanation": "Summary offences are generally heard in the Magistrates' Court.",
-        "learnmore": "https://www.mcv.vic.gov.au/"
+        "learnmore": "https://www.mcv.vic.gov.au/criminal-matters/criminal-offences/summary-offences"
     },
     {
         "question": "Which piece of legislation primarily guides sentencing in Victoria?",
@@ -83,7 +84,7 @@ questions = [
         ],
         "correct_index": 2,
         "explanation": "The Court of Appeal reviews decisions from the County and Supreme Courts.",
-        "learnmore": "https://www.supremecourt.vic.gov.au/"
+        "learnmore": "https://www.supremecourt.vic.gov.au/areas/court-of-appeal/"
     },
     {
         "question": "What is the purpose of a committal hearing for indictable offenses in the Magistrates' Court?",
@@ -111,7 +112,7 @@ questions = [
             "legal causation (cause in fact) considers whether the defendant's act was an operating and substantial cause of the harm. "
             "Legal causation requires the harm to be a foreseeable result of the act, not a remote or insignificant one."
         ),
-        "learnmore": "https://galballyparker.com.au/what-are-pre-trial-procedures-and-how-do-they-work-in-practice/"
+        "learnmore": "https://www.fedcourt.gov.au/digital-law-library/judges-speeches/speeches-former-judges/justice-edelman/edelman-j-20150907"
     }
 ]
 
@@ -169,6 +170,7 @@ def start_screen():
     show_welcome()
     root.mainloop()
 
+       
 
 class lawQuizApp:
     
@@ -222,6 +224,10 @@ class lawQuizApp:
 
         self.quit_button = tk.Button(self.content_frame, text="Cancel quiz", command=self.quit_to_start, font=("Arial", 12), bg=self.BTN_BG, highlightbackground=self.BG_COLOR)
         self.quit_button.pack(pady=5)
+        
+ 
+          
+        
 
     def start_quiz(self, length=5):
        #Start or restart the quiz. 
@@ -234,17 +240,34 @@ class lawQuizApp:
         self.score = 0
         self.explanations = []
         self.selected_option.set(-1)
+        
+                
         self.show_quiz_view()
+        # Set timer countdown in seconds. Currentlly 5 minutes
+        self.countdown(300)
 
     def show_quiz_view(self):
         # Reset content_frame to show fresh quiz content
         for w in self.content_frame.winfo_children():
             w.destroy()
 
+        #timer label
+        self.status = tk.Label(
+        self.content_frame,
+        text="",
+        bg=self.BG_COLOR,
+        fg=self.FG_COLOR,
+        font=("Times", 16, "bold underline")
+         )
+        self.status.pack(pady=10)
+
+
         self.question_label = tk.Label(self.content_frame, text="", wraplength=400, font=("Arial", 14), bg=self.BG_COLOR, fg=self.FG_COLOR)
         self.question_label.pack(pady=20)
 
         self.radio_buttons = []
+        
+        
         for i in range(4):
             rb = tk.Radiobutton(self.content_frame,
                                 text="",
@@ -265,10 +288,11 @@ class lawQuizApp:
 
         self.quit_button = tk.Button(self.content_frame, text="Cancel quiz", command=self.quit_to_start, font=("Arial", 12), bg=self.BTN_BG, highlightbackground=self.BG_COLOR)
         self.quit_button.pack(pady=5)
-
+        
+       
         # Load the first (current) question.
         self.load_question()
-
+        
     def load_question(self):
         #Load question into the UI.
         q = self.questions[self.q_index]
@@ -392,6 +416,20 @@ class lawQuizApp:
                                 command=self.root.quit)
         quit_button.pack(side="left", padx=10)
     
+    def countdown(self, time, msg='Time Left : '):
+        
+        #timer minutes and seconds 
+        if time > 0:
+            minutes = time // 60
+            seconds = time % 60
+            self.status.config(
+             text=f"{msg}{minutes:02d}:{seconds:02d}",
+             font=("Arial", 16, "bold underline")
+             )
+            self.root.after(1000, self.countdown, time - 1, msg)
+        else:
+            self.status.config(text="Time's up!")
+            self.show_results()
             
     def quit_to_start(self):
         # Prompt user to confirm return to welcome screen
