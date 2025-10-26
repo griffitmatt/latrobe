@@ -96,20 +96,40 @@ questions = [
         "answer": "To determine if there is sufficient evidence to proceed to trial in a higher court.",
         "explanation": "Pre-trial hearings in the Magistrates' Court for indictable offenses determine whether there is sufficient evidence to send the accused for trial in a higher court.",
         "learnmore": "https://galballyparker.com.au/what-are-pre-trial-procedures-and-how-do-they-work-in-practice/"
+    },
+     {
+        "question": "What is the primary difference between the 'but for' test and the legal causation test in proving actus reus?",
+        "options": [
+            "The 'but for' test focuses on mental state, while legal causation focuses on physical actions.",
+            "The 'but for' test applies to omissions, while legal causation applies to acts.",
+            "The 'but for' test establishes factual link, while legal causation considers operating and substantial cause.",
+            "The 'but for' test establishes foreseeability, while legal causation establishes direct intent."
+        ],
+        "answer": "he 'but for' test establishes factual link, while legal causation considers operating and substantial cause.",
+        "explanation": """The "but for" test determines factual causation by asking if the harm would have occurred without the defendant's action, 
+        while legal causation, also known as ""cause in fact,"" 
+        determines if the defendant's act was an operating and substantial cause of the harm, even if not the sole cause. Legal causation requires the harm to be a
+        foreseeable result of the act, not a remote or insignificant one.""",
+        "learnmore": "https://galballyparker.com.au/what-are-pre-trial-procedures-and-how-do-they-work-in-practice/"
     }
 ]
+
+#constants
+#Window Title 
+APP_TITLE = "Criminal Law Study App"
+#Colours
+BG_COLOR = "purple"
+FG_COLOR = "lightgrey"
+BTN_BG = "lightgrey"
 
 
 def start_screen():
     
     root = tk.Tk()
-    root.title("Criminal Law Study Quiz")
+    root.title(APP_TITLE)
     root.configure(bg="purple")
 
-    # Color constants
-    BG_COLOR = "purple"
-    FG_COLOR = "lightgrey"
-    BTN_BG = "lightgrey"
+  
 
     def show_welcome():
         
@@ -128,7 +148,7 @@ def start_screen():
             # Remove welcome and start quiz
             for w in root.winfo_children():
                 w.destroy()
-            app = lawQuizApp(root, back_callback=show_welcome)
+            app = lawQuizApp(root, back_callback=show_welcome,bg_color=BG_COLOR,fg_color=FG_COLOR,btn_bg=BTN_BG)
             app.start_quiz()
 
         start_button = tk.Button(root,
@@ -155,10 +175,10 @@ class lawQuizApp:
     
     #Main quiz application UI.
     
-    def __init__(self, root, back_callback):
+    def __init__(self, root, back_callback,bg_color, fg_color, btn_bg):
         self.root = root
         self.back_callback = back_callback
-        self.root.title("Criminal Law Victoria Quiz")
+        
 
         # State
         self.selected_option = tk.IntVar(value=-1)
@@ -167,19 +187,23 @@ class lawQuizApp:
         self.score = 0
         self.explanations = []
 
-        # Styling
-        self.BG_COLOR = "purple"
-        self.FG_COLOR = "lightgrey"
-        self.BTN_BG = "lightgrey"
+        #Colour style
+        self.BG_COLOR = bg_color
+        self.FG_COLOR = fg_color
+        self.BTN_BG = btn_bg
 
         # Build UI
         self.root.configure(bg=self.BG_COLOR)
-        self.question_label = tk.Label(root, text="", wraplength=400, font=("Arial", 14), bg=self.BG_COLOR, fg=self.FG_COLOR)
+        # Put all widgets inside a content frame so it's easier to clear/replace views
+        self.content_frame = tk.Frame(self.root, bg=self.BG_COLOR)
+        self.content_frame.pack(fill="both", expand=True)
+
+        self.question_label = tk.Label(self.content_frame, text="", wraplength=400, font=("Arial", 14), bg=self.BG_COLOR, fg=self.FG_COLOR)
         self.question_label.pack(pady=20)
 
         self.radio_buttons = []
         for i in range(4):
-            rb = tk.Radiobutton(root,
+            rb = tk.Radiobutton(self.content_frame,
                                 text="",
                                 variable=self.selected_option,
                                 value=i,
@@ -193,15 +217,15 @@ class lawQuizApp:
             rb.pack(anchor="w")
             self.radio_buttons.append(rb)
 
-        self.next_button = tk.Button(root, text="Next", command=self.next_question, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
+        self.next_button = tk.Button(self.content_frame, text="Next", command=self.next_question, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
         self.next_button.pack(pady=10)
 
-        self.quit_button = tk.Button(root, text="Cancel quiz", command=self.quit_to_start, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
+        self.quit_button = tk.Button(self.content_frame, text="Cancel quiz", command=self.quit_to_start, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
         self.quit_button.pack(pady=5)
 
     def start_quiz(self, length=5):
        #Start or restart the quiz. 
-        
+        #Ensure quiz will stil run if there are less than 5 questions
         quiz_len = min(length, len(questions))
         # Choose random questions
         self.original_questions = random.sample(questions, k=quiz_len)
@@ -210,10 +234,43 @@ class lawQuizApp:
         self.score = 0
         self.explanations = []
         self.selected_option.set(-1)
+        self.show_quiz_view()
+
+    def show_quiz_view(self):
+        # Reset content_frame to show fresh quiz content
+        for w in self.content_frame.winfo_children():
+            w.destroy()
+
+        self.question_label = tk.Label(self.content_frame, text="", wraplength=400, font=("Arial", 14), bg=self.BG_COLOR, fg=self.FG_COLOR)
+        self.question_label.pack(pady=20)
+
+        self.radio_buttons = []
+        for i in range(4):
+            rb = tk.Radiobutton(self.content_frame,
+                                text="",
+                                variable=self.selected_option,
+                                value=i,
+                                font=("Arial", 12),
+                                anchor="w",
+                                justify="left",
+                                bg=self.BG_COLOR,
+                                fg=self.FG_COLOR,
+                                selectcolor=self.BG_COLOR,
+                                activebackground=self.BG_COLOR)
+            rb.pack(anchor="w")
+            self.radio_buttons.append(rb)
+
+        self.next_button = tk.Button(self.content_frame, text="Next", command=self.next_question, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
+        self.next_button.pack(pady=10)
+
+        self.quit_button = tk.Button(self.content_frame, text="Cancel quiz", command=self.quit_to_start, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
+        self.quit_button.pack(pady=5)
+
+        # Load the first (current) question.
         self.load_question()
 
     def load_question(self):
-        #Load question into the UI."""
+        #Load question into the UI.
         q = self.questions[self.q_index]
         self.question_label.config(text=q["question"])
         self.selected_option.set(-1)
@@ -242,80 +299,70 @@ class lawQuizApp:
 
         self.q_index += 1
         if self.q_index < len(self.questions):
-            self.load_question() 
+            self.load_question()
         else:
-            self.next_question.destroy() 
             self.show_results()
-            
-           
     
-    def retry_same_quiz(self):
+    def reset_to_original_questions(self):
+        #Reuse original questions instead of generating new set of questions
         self.questions = self.original_questions.copy()
         self.q_index = 0
         self.score = 0
         self.explanations = []
         self.selected_option.set(-1)
-        self.load_question() 
-        
+        self.show_quiz_view()
+
     def show_results(self):
-        #Results Window
+         # Clear the window show results
+        for w in self.content_frame.winfo_children():
+            w.destroy()
+
         explanation_text = "\n\n".join(self.explanations)
         learnmore_links = []
-        for i, q in enumerate(self.questions, start=1):
+        # Use original_questions to map consistently to displayed Q numbers
+        for i, q in enumerate(self.original_questions, start=1):
             if q.get("learnmore"):
                 learnmore_links.append((f"Q{i}", q["learnmore"]))
 
-        result_window = tk.Toplevel(self.root)
-        result_window.title("Quiz Completed")
-        result_window.configure(bg=self.BG_COLOR)
-        #Results label
-        result_label = tk.Label(result_window,
-                                text=f"Your score: {self.score}/{len(self.questions)}\n\n{explanation_text}",
+        # Results label
+        result_label = tk.Label(self.content_frame,
+                                text=f"Your score: {self.score}/{len(self.questions)}",
                                 justify="left",
                                 bg=self.BG_COLOR,
                                 fg=self.FG_COLOR,
-                                font=("Arial", 12),
-                                wraplength=500)
-        result_label.pack(padx=20, pady=10)
-        #Learn more links
+                                font=("Arial", 14))
+        result_label.pack(padx=20, pady=(10, 5), anchor="w")
+
+        explanations_label = tk.Label(self.content_frame,
+                                     text=explanation_text,
+                                     justify="left",
+                                     bg=self.BG_COLOR,
+                                     fg=self.FG_COLOR,
+                                     font=("Arial", 12),
+                                     wraplength=600)
+        explanations_label.pack(padx=20, pady=(0, 10), anchor="w")
+
+        # Learn more links (if any)
         if learnmore_links:
-            lm_frame = tk.Frame(result_window, bg=self.BG_COLOR)
+            lm_frame = tk.Frame(self.content_frame, bg=self.BG_COLOR)
             lm_frame.pack(padx=20, pady=(0, 10), anchor="w")
-            header = tk.Label(lm_frame, text="📚 Learn more:", bg=self.BG_COLOR, fg=self.FG_COLOR, font=("Arial", 12, "bold"))
+            header = tk.Label(lm_frame, text="Learn more:", bg=self.BG_COLOR, fg=self.FG_COLOR, font=("Arial", 12, "bold"))
             header.pack(anchor="w")
             for label_text, url in learnmore_links:
-                #Loop through each item in learnmore_links 
-                link = tk.Label(lm_frame, text=f"{label_text}: {url}", fg="Light Cyan", bg=self.BG_COLOR, cursor="hand2", wraplength=360, justify="left")
+                link = tk.Label(lm_frame, text=f"{label_text}: {url}", fg="Light Cyan", bg=self.BG_COLOR, cursor="hand2", wraplength=560, justify="left")
                 # bind the click to open the URL
                 link.bind("<Button-1>", lambda e, u=url: webbrowser.open(u))
                 link.pack(anchor="w", pady=2)
-                
-        #Button frame for the retry options
-        btn_frame = tk.Frame(result_window, bg=self.BG_COLOR)
-        btn_frame.pack(pady=10)
-        
-        
-        
-        def retry_same_quiz():
-            result_window.destroy()
-            # Reuse the same set of original questions
-            self.questions = self.original_questions.copy()
-            self.q_index = 0
-            self.score = 0
-            self.explanations = []
-            self.selected_option.set(-1)
-            self.load_question()
 
-        def on_new_quiz():
-            result_window.destroy()
-            # Start a fresh quiz (will pick new random questions)
-            self.start_quiz()
+        # Button frame for options
+        btn_frame = tk.Frame(self.content_frame, bg=self.BG_COLOR)
+        btn_frame.pack(pady=10)
 
         retry_same_button = tk.Button(btn_frame,
                                  text="Retry Quiz",
                                  font=("Arial", 14),
                                  bg=self.BTN_BG,highlightbackground=self.BG_COLOR,
-                                 command=retry_same_quiz)
+                                 command=self.reset_to_original_questions)
         retry_same_button.pack(side="left", padx=10)
         
         # Retry with new questions
@@ -323,10 +370,10 @@ class lawQuizApp:
                              text="New Quiz",
                              font=("Arial", 14),
                              bg=self.BTN_BG,highlightbackground=self.BG_COLOR,
-                             command=on_new_quiz)
+                             command=lambda: self.start_quiz())
         retry_new_button.pack(side="left", padx=10)
         
-        #Quit button
+        # Button to exit the application
         quit_button = tk.Button(btn_frame,
                                 text="Quit",
                                 font=("Arial", 14),
@@ -336,13 +383,13 @@ class lawQuizApp:
     
             
     def quit_to_start(self):
-        #Return to the welcome screen
+        # Prompt user to confirm return to welcome screen
         if messagebox.askyesno("Confirm", "Are you sure you want to return to the welcome screen?"):
             # Remove all windows
             for w in self.root.winfo_children():
                 w.destroy()
             self.back_callback()
 
-# Ensures the start screen runs when this script is executed directly.
+# This is important if you want the start screen to start.
 if __name__ == "__main__":
     start_screen()
