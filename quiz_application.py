@@ -9,7 +9,7 @@ import webbrowser
 # Dictionary format:
 # - question: Quiz question
 # - options: Possible answers
-# - answer: Correct answer
+# - correct_index: 0-based index of the correct answer in options
 # - explanation: Brief explanation of the answer
 # - learnmore: Weblink for more detailed information about the answer
 questions = [
@@ -21,7 +21,7 @@ questions = [
             "The responsibility of the jury to determine the outcome of the trial",
             "The responsibility of the judge to ensure a fair trial."
         ],
-        "answer": "The responsibility of the prosecution to prove the accused's guilt.",
+        "correct_index": 1,
         "explanation": "In Victoria, the burden of proof lies with the prosecution, which must prove guilt beyond reasonable doubt.",
         "learnmore": "https://www.legislation.vic.gov.au/"
     },
@@ -33,7 +33,7 @@ questions = [
             "Dietrich v The Queen (1992) 177 CLR 292",
             "VR v L (1991) 174 CLR 379"
         ],
-        "answer": "Petty v R (1991) 173 CLR 95",
+        "correct_index": 1,
         "explanation": "The High Court in Petty v R affirmed the principle of the right to silence.",
         "learnmore": "https://jade.io/article/67668"
     },
@@ -45,7 +45,7 @@ questions = [
             "The Magistrates' Court of Victoria",
             "The Supreme Court of Victoria"
         ],
-        "answer": "The Magistrates' Court of Victoria",
+        "correct_index": 2,
         "explanation": "Summary offences are generally heard in the Magistrates' Court.",
         "learnmore": "https://www.mcv.vic.gov.au/"
     },
@@ -57,7 +57,7 @@ questions = [
             "The Sentencing Act 1991 (Vic)",
             "The Bail Act 1977 (Vic)"
         ],
-        "answer": "The Sentencing Act 1991 (Vic)",
+        "correct_index": 2,
         "explanation": "This Act sets out the framework and principles for sentencing.",
         "learnmore": "https://content.legislation.vic.gov.au/sites/default/files/2025-09/91-49aa231-authorised.pdf"
     },
@@ -69,7 +69,7 @@ questions = [
             "To determine questions of fact and deliver a verdict.",
             "To present the prosecution's opening statement and closing argument."
         ],
-        "answer": "To determine questions of fact and deliver a verdict.",
+        "correct_index": 2,
         "explanation": "Juries decide questions of fact, while judges handle questions of law.",
         "learnmore": "https://www.judicialcollege.vic.edu.au/"
     },
@@ -81,7 +81,7 @@ questions = [
             "The Court of Appeal (Victorian Supreme Court).",
             "The Magistrates' Court."
         ],
-        "answer": "The Court of Appeal (Victorian Supreme Court).",
+        "correct_index": 2,
         "explanation": "The Court of Appeal reviews decisions from the County and Supreme Courts.",
         "learnmore": "https://www.supremecourt.vic.gov.au/"
     },
@@ -93,11 +93,11 @@ questions = [
             "To determine if there is sufficient evidence to proceed to trial in a higher court.",
             "To impose the final sentence for the offense."
         ],
-        "answer": "To determine if there is sufficient evidence to proceed to trial in a higher court.",
+        "correct_index": 2,
         "explanation": "Pre-trial hearings in the Magistrates' Court for indictable offenses determine whether there is sufficient evidence to send the accused for trial in a higher court.",
         "learnmore": "https://galballyparker.com.au/what-are-pre-trial-procedures-and-how-do-they-work-in-practice/"
     },
-     {
+    {
         "question": "What is the primary difference between the 'but for' test and the legal causation test in proving actus reus?",
         "options": [
             "The 'but for' test focuses on mental state, while legal causation focuses on physical actions.",
@@ -105,11 +105,12 @@ questions = [
             "The 'but for' test establishes factual link, while legal causation considers operating and substantial cause.",
             "The 'but for' test establishes foreseeability, while legal causation establishes direct intent."
         ],
-        "answer": "he 'but for' test establishes factual link, while legal causation considers operating and substantial cause.",
-        "explanation": """The "but for" test determines factual causation by asking if the harm would have occurred without the defendant's action, 
-        while legal causation, also known as ""cause in fact,"" 
-        determines if the defendant's act was an operating and substantial cause of the harm, even if not the sole cause. Legal causation requires the harm to be a
-        foreseeable result of the act, not a remote or insignificant one.""",
+        "correct_index": 2,
+        "explanation": (
+            "The 'but for' test determines factual causation by asking if the harm would have occurred without the defendant's action; "
+            "legal causation (cause in fact) considers whether the defendant's act was an operating and substantial cause of the harm. "
+            "Legal causation requires the harm to be a foreseeable result of the act, not a remote or insignificant one."
+        ),
         "learnmore": "https://galballyparker.com.au/what-are-pre-trial-procedures-and-how-do-they-work-in-practice/"
     }
 ]
@@ -129,8 +130,6 @@ def start_screen():
     root.title(APP_TITLE)
     root.configure(bg="purple")
 
-  
-
     def show_welcome():
         
         # Clear any existing 
@@ -148,7 +147,7 @@ def start_screen():
             # Remove welcome and start quiz
             for w in root.winfo_children():
                 w.destroy()
-            app = lawQuizApp(root, back_callback=show_welcome,bg_color=BG_COLOR,fg_color=FG_COLOR,btn_bg=BTN_BG)
+            app = lawQuizApp(root, back_callback=show_welcome, bg_color=BG_COLOR, fg_color=FG_COLOR, btn_bg=BTN_BG)
             app.start_quiz()
 
         start_button = tk.Button(root,
@@ -175,13 +174,14 @@ class lawQuizApp:
     
     #Main quiz application UI.
     
-    def __init__(self, root, back_callback,bg_color, fg_color, btn_bg):
+    def __init__(self, root, back_callback, bg_color, fg_color, btn_bg):
         self.root = root
         self.back_callback = back_callback
         
 
         # State
-        self.selected_option = tk.IntVar(value=-1)
+        # use explicit master for the IntVar
+        self.selected_option = tk.IntVar(self.root, value=-1)
         self.questions = []
         self.q_index = 0
         self.score = 0
@@ -217,15 +217,15 @@ class lawQuizApp:
             rb.pack(anchor="w")
             self.radio_buttons.append(rb)
 
-        self.next_button = tk.Button(self.content_frame, text="Next", command=self.next_question, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
+        self.next_button = tk.Button(self.content_frame, text="Next", command=self.next_question, font=("Arial", 12), bg=self.BTN_BG, highlightbackground=self.BG_COLOR)
         self.next_button.pack(pady=10)
 
-        self.quit_button = tk.Button(self.content_frame, text="Cancel quiz", command=self.quit_to_start, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
+        self.quit_button = tk.Button(self.content_frame, text="Cancel quiz", command=self.quit_to_start, font=("Arial", 12), bg=self.BTN_BG, highlightbackground=self.BG_COLOR)
         self.quit_button.pack(pady=5)
 
     def start_quiz(self, length=5):
        #Start or restart the quiz. 
-        #Ensure quiz will stil run if there are less than 5 questions
+        #Ensure quiz will still run if there are less than 5 questions
         quiz_len = min(length, len(questions))
         # Choose random questions
         self.original_questions = random.sample(questions, k=quiz_len)
@@ -260,10 +260,10 @@ class lawQuizApp:
             rb.pack(anchor="w")
             self.radio_buttons.append(rb)
 
-        self.next_button = tk.Button(self.content_frame, text="Next", command=self.next_question, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
+        self.next_button = tk.Button(self.content_frame, text="Next", command=self.next_question, font=("Arial", 12), bg=self.BTN_BG, highlightbackground=self.BG_COLOR)
         self.next_button.pack(pady=10)
 
-        self.quit_button = tk.Button(self.content_frame, text="Cancel quiz", command=self.quit_to_start, font=("Arial", 12), bg=self.BTN_BG,highlightbackground=self.BG_COLOR)
+        self.quit_button = tk.Button(self.content_frame, text="Cancel quiz", command=self.quit_to_start, font=("Arial", 12), bg=self.BTN_BG, highlightbackground=self.BG_COLOR)
         self.quit_button.pack(pady=5)
 
         # Load the first (current) question.
@@ -288,14 +288,25 @@ class lawQuizApp:
             return
 
         q = self.questions[self.q_index]
-        chosen = q["options"][self.selected_option.get()]
-        correct = q["answer"]
+        chosen_index = self.selected_option.get()
+        correct_index = q.get("correct_index", None)
 
-        if chosen == correct:
-            self.score += 1
-            self.explanations.append(f"Q{self.q_index+1}: ✅ Correct - {q['explanation']}")
+        if correct_index is None:
+            # Fallback: if dataset still uses 'answer' text, attempt to compare strings
+            chosen_text = q["options"][chosen_index]
+            correct_text = q.get("answer", "")
+            if chosen_text == correct_text:
+                self.score += 1
+                self.explanations.append(f"Q{self.q_index+1}: ✅ Correct - {q['explanation']}")
+            else:
+                self.explanations.append(f"Q{self.q_index+1}: ❌ Incorrect - {q['explanation']} (Correct: {correct_text})")
         else:
-            self.explanations.append(f"Q{self.q_index+1}: ❌ Incorrect - {q['explanation']}")
+            if chosen_index == correct_index:
+                self.score += 1
+                self.explanations.append(f"Q{self.q_index+1}: ✅ Correct - {q['explanation']}")
+            else:
+                correct_text = q["options"][correct_index]
+                self.explanations.append(f"Q{self.q_index+1}: ❌ Incorrect - {q['explanation']} (Correct: {correct_text})")
 
         self.q_index += 1
         if self.q_index < len(self.questions):
@@ -349,7 +360,7 @@ class lawQuizApp:
             header = tk.Label(lm_frame, text="Learn more:", bg=self.BG_COLOR, fg=self.FG_COLOR, font=("Arial", 12, "bold"))
             header.pack(anchor="w")
             for label_text, url in learnmore_links:
-                link = tk.Label(lm_frame, text=f"{label_text}: {url}", fg="Light Cyan", bg=self.BG_COLOR, cursor="hand2", wraplength=560, justify="left")
+                link = tk.Label(lm_frame, text=f"{label_text}: {url}", fg="light cyan", bg=self.BG_COLOR, cursor="hand2", wraplength=560, justify="left")
                 # bind the click to open the URL
                 link.bind("<Button-1>", lambda e, u=url: webbrowser.open(u))
                 link.pack(anchor="w", pady=2)
@@ -361,7 +372,7 @@ class lawQuizApp:
         retry_same_button = tk.Button(btn_frame,
                                  text="Retry Quiz",
                                  font=("Arial", 14),
-                                 bg=self.BTN_BG,highlightbackground=self.BG_COLOR,
+                                 bg=self.BTN_BG, highlightbackground=self.BG_COLOR,
                                  command=self.reset_to_original_questions)
         retry_same_button.pack(side="left", padx=10)
         
@@ -369,7 +380,7 @@ class lawQuizApp:
         retry_new_button = tk.Button(btn_frame,
                              text="New Quiz",
                              font=("Arial", 14),
-                             bg=self.BTN_BG,highlightbackground=self.BG_COLOR,
+                             bg=self.BTN_BG, highlightbackground=self.BG_COLOR,
                              command=lambda: self.start_quiz())
         retry_new_button.pack(side="left", padx=10)
         
@@ -377,7 +388,7 @@ class lawQuizApp:
         quit_button = tk.Button(btn_frame,
                                 text="Quit",
                                 font=("Arial", 14),
-                                bg=self.BTN_BG,highlightbackground=self.BG_COLOR,
+                                bg=self.BTN_BG, highlightbackground=self.BG_COLOR,
                                 command=self.root.quit)
         quit_button.pack(side="left", padx=10)
     
