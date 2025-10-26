@@ -242,17 +242,20 @@ class lawQuizApp:
 
         self.q_index += 1
         if self.q_index < len(self.questions):
-            self.load_question()
+            self.load_question() 
         else:
+            self.next_question.destroy() 
             self.show_results()
+            
+           
     
     def retry_same_quiz(self):
         self.questions = self.original_questions.copy()
         self.q_index = 0
         self.score = 0
         self.explanations = []
-        self.selected_index.set(-1)
-        self.load_question()
+        self.selected_option.set(-1)
+        self.load_question() 
         
     def show_results(self):
         #Results Window
@@ -272,7 +275,7 @@ class lawQuizApp:
                                 bg=self.BG_COLOR,
                                 fg=self.FG_COLOR,
                                 font=("Arial", 12),
-                                wraplength=380)
+                                wraplength=500)
         result_label.pack(padx=20, pady=10)
         #Learn more links
         if learnmore_links:
@@ -281,14 +284,17 @@ class lawQuizApp:
             header = tk.Label(lm_frame, text="📚 Learn more:", bg=self.BG_COLOR, fg=self.FG_COLOR, font=("Arial", 12, "bold"))
             header.pack(anchor="w")
             for label_text, url in learnmore_links:
+                #Loop through each item in learnmore_links 
                 link = tk.Label(lm_frame, text=f"{label_text}: {url}", fg="Light Cyan", bg=self.BG_COLOR, cursor="hand2", wraplength=360, justify="left")
                 # bind the click to open the URL
                 link.bind("<Button-1>", lambda e, u=url: webbrowser.open(u))
                 link.pack(anchor="w", pady=2)
+                
         #Button frame for the retry options
         btn_frame = tk.Frame(result_window, bg=self.BG_COLOR)
         btn_frame.pack(pady=10)
-
+        
+        
         
         def retry_same_quiz():
             result_window.destroy()
@@ -337,6 +343,6 @@ class lawQuizApp:
                 w.destroy()
             self.back_callback()
 
-# This is important if you want the start screen to start.
+# Ensures the start screen runs when this script is executed directly.
 if __name__ == "__main__":
     start_screen()
