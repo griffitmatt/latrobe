@@ -145,6 +145,7 @@ def start_screen():
         label.pack(pady=40)
 
         def launch_quiz():
+            global app
             # Remove welcome and start quiz
             for w in root.winfo_children():
                 w.destroy()
@@ -179,6 +180,7 @@ class lawQuizApp:
     def __init__(self, root, back_callback, bg_color, fg_color, btn_bg):
         self.root = root
         self.back_callback = back_callback
+        self.timer_id = None
         
 
         # State
@@ -265,24 +267,12 @@ class lawQuizApp:
         self.question_label = tk.Label(self.content_frame, text="", wraplength=400, font=("Arial", 14), bg=self.BG_COLOR, fg=self.FG_COLOR)
         self.question_label.pack(pady=20)
 
+        # Create an options frame; option widgets will be generated per question
+        self.options_frame = tk.Frame(self.content_frame, bg=self.BG_COLOR)
+        self.options_frame.pack()
         self.radio_buttons = []
         
         
-        for i in range(4):
-            rb = tk.Radiobutton(self.content_frame,
-                                text="",
-                                variable=self.selected_option,
-                                value=i,
-                                font=("Arial", 12),
-                                anchor="w",
-                                justify="left",
-                                bg=self.BG_COLOR,
-                                fg=self.FG_COLOR,
-                                selectcolor=self.BG_COLOR,
-                                activebackground=self.BG_COLOR)
-            rb.pack(anchor="w")
-            self.radio_buttons.append(rb)
-
         self.next_button = tk.Button(self.content_frame, text="Next", command=self.next_question, font=("Arial", 12), bg=self.BTN_BG, highlightbackground=self.BG_COLOR)
         self.next_button.pack(pady=10)
 
@@ -298,15 +288,47 @@ class lawQuizApp:
         q = self.questions[self.q_index]
         self.question_label.config(text=q["question"])
         self.selected_option.set(-1)
-        for rb in self.radio_buttons:
-            rb.deselect()
-            rb.config(text="")  # clear old text
-        for i, option in enumerate(q["options"]):
-            if i < len(self.radio_buttons):
-                self.radio_buttons[i].config(text=option, value=i)
+
+        # Clear any existing option widgets
+        for rb in getattr(self, 'radio_buttons', []):
+            try:
+                rb.destroy()
+            except Exception:
+                pass
+        self.radio_buttons = []
+
+        # Ensure options_frame exists and is cleared
+        if not hasattr(self, 'options_frame') or self.options_frame is None:
+            self.options_frame = tk.Frame(self.content_frame, bg=self.BG_COLOR)
+            self.options_frame.pack()
+        else:
+            for child in self.options_frame.winfo_children():
+                child.destroy()
+
+        # Create a radio button for each available option (no fixed limit)
+        for i, option in enumerate(q.get("options", [])):
+            rb = tk.Radiobutton(self.options_frame,
+                                text=option,
+                                variable=self.selected_option,
+                                value=i,
+                                font=("Arial", 12),
+                                anchor="w",
+                                justify="left",
+                                bg=self.BG_COLOR,
+                                fg=self.FG_COLOR,
+                                selectcolor=self.BG_COLOR,
+                                activebackground=self.BG_COLOR,
+                                wraplength=380)
+            rb.pack(anchor="w", fill='x', padx=5, pady=2)
+            self.radio_buttons.append(rb)
 
     def next_question(self):
        # Next Question, populate possible answers, record answer and explanation.
+        
+        if self.q_index >= len(self.questions):
+         self.show_results()
+         return
+        
         if self.selected_option.get() == -1:
             messagebox.showwarning("Warning", "Please select an answer before continuing.")
             return
@@ -336,7 +358,10 @@ class lawQuizApp:
         if self.q_index < len(self.questions):
             self.load_question()
         else:
-            self.show_results()
+            if self.timer_id is not None:
+                self.root.after_cancel(self.timer_id)
+                self.timer_id = None
+                self.show_results()
     
     def reset_to_original_questions(self):
         #Reuse original questions instead of generating new set of questions
@@ -348,9 +373,17 @@ class lawQuizApp:
         self.show_quiz_view()
 
     def show_results(self):
+        # Cancel the countdown timer if it's still running
+        if hasattr(self, "timer_id") and self.timer_id is not None:
+         self.root.after_cancel(self.timer_id)
+         self.timer_id = None
+       
+        
          # Clear the window show results
         for w in self.content_frame.winfo_children():
             w.destroy()
+        
+         
 
         explanation_text = "\n\n".join(self.explanations)
         learnmore_links = []
@@ -417,7 +450,8 @@ class lawQuizApp:
         quit_button.pack(side="left", padx=10)
     
     def countdown(self, time, msg='Time Left : '):
-        
+        if not hasattr(self, "status") or not self.status.winfo_exists():
+         return
         #timer minutes and seconds 
         if time > 0:
             minutes = time // 60
@@ -428,8 +462,9 @@ class lawQuizApp:
              )
             self.root.after(1000, self.countdown, time - 1, msg)
         else:
-            self.status.config(text="Time's up!")
-            self.show_results()
+             self.status.config(text="Time's up!")
+             self.timer_id = None
+             self.show_results()
             
     def quit_to_start(self):
         # Prompt user to confirm return to welcome screen
